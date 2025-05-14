@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Metadatos básicos para codificación UTF-8 y adaptación a dispositivos móviles -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmo de encriptación DES</title>
+
+    <!-- Enlace al archivo CSS para el diseño de la interfaz -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Carga de librerías de CryptoJS para el cifrado y descifrado con el algoritmo DES -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/mode-ecb.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/pad-pkcs7.min.js"></script>
+</head>
+
+<body>
+    <!-- Contenedor para mostrar mensajes de notificación (éxito o error) -->
+    <div id="notification-container">
+        <div id="notification" class="hidden">
+            <span id="notification-message"></span>
+        </div>
+    </div>
+
+    <!-- Encabezado de la página con el título y botones de manejo de sesión -->
+    <header>
+        <h1>Algoritmo de encriptación DES</h1>
+        <div class="elementos-sesion">
+            <!-- Botones de inicio de sesión y registro -->
+            <a href="/login"><button class="login-button">Iniciar sesión</button></a>
+            <a href="/register"><button class="register-button">Registrarse</button></a>
+            <!-- Muestra el nombre de usuario si está autenticado -->
+            <span id="username-display" style="margin-right: 15px;"></span>
+            <!-- Botón para cerrar sesión, inicialmente oculto -->
+            <button id="logout-button" class="logout-button hidden">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Sección para ingresar texto y realizar operaciones de cifrado/desencriptación -->
+        <section class="encryption-inputs">
+            <div class="input-group">
+                <!-- Campo para ingresar la clave de cifrado (opcional) -->
+                <label for="cipher-key">Clave de cifrado</label>
+                <input type="text" id="cipher-key" placeholder="Opcional, ingresa una contraseña de cifrado">
+            </div>
+
+            <!-- Área de texto para el contenido plano y el cifrado -->
+            <div class="text-areas">
+                <div class="input-group">
+                    <label for="plain-text">Texto plano</label>
+                    <textarea id="plain-text" placeholder="Texto a encriptar"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="ciphered-text">Texto cifrado</label>
+                    <textarea id="ciphered-text" placeholder="Texto encriptado"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones para encriptar y desencriptar el texto ingresado -->
+            <div class="action-buttons">
+                <button class="encrypt-button">Encriptar</button>
+                <button class="decrypt-button">Desencriptar</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Pie de página con créditos de autoría -->
+    <footer>
+        <p>© Seguridad informática 2025 Alicia Denise García Acosta | Victoria Isabel Villalba Beltrán. Todos los
+            derechos reservados</p>
+    </footer>
+
+    <script>
+        // Referencias a elementos del DOM
+        const plainTextarea = document.getElementById('plain-text');
+        const cipheredTextarea = document.getElementById('ciphered-text');
+        const cipherKeyInput = document.getElementById('cipher-key');
+        const encryptButton = document.querySelector('.encrypt-button');
+        const decryptButton = document.querySelector('.decrypt-button');
+        const notificationContainer = document.getElementById('notification-container');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        const usernameDisplay = document.getElementById('username-display');
+        const logoutButton = document.getElementById('logout-button');
+        const loginButton = document.querySelector('.login-button');
+        const registerButton = document.querySelector('.register-button');
+
+        // Función para mostrar mensajes de notificación
+        function showNotification(message, isSuccess = false) {
+            notificationMessage.textContent = message;
+            notification.className = isSuccess ? 'show success' : 'show';
+            notificationContainer.style.display = 'block';
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notificationContainer.style.display = 'none';
+                }, 300);
+            }, 3000);
+        }
+
+        // Evento para encriptar el texto ingresado
+        encryptButton.addEventListener('click', () => {
+            const plainText = plainTextarea.value;
+            const key = cipherKeyInput.value;
+
+            if (plainText) {
+                const encrypted = CryptoJS.DES.encrypt(plainText, key, {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                cipheredTextarea.value = encrypted.toString();
+                showNotification('Texto encriptado correctamente.', true);
+            } else {
+                showNotification('Por favor, ingresa texto para encriptar.');
+            }
+        });
+
+        // Evento para desencriptar el texto ingresado
+        decryptButton.addEventListener('click', () => {
+            const cipheredText = cipheredTextarea.value;
+            const key = cipherKeyInput.value;
+
+            try {
+                const decrypted = CryptoJS.DES.decrypt(cipheredText, key, {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
+
+                if (decryptedText) {
+                    plainTextarea.value = decryptedText;
+                    showNotification('Texto desencriptado correctamente.', true);
+                } else {
+                    showNotification('Contraseña incorrecta o texto cifrado inválido.');
+                }
+            } catch (error) {
+                plainTextarea.value = '';
+                showNotification('Error al desencriptar.');
+                console.error('Error de desencriptación:', error);
+            }
+        });
+
+        // Manejo de sesión: verificar si el usuario está autenticado
+        function checkSession() {
+            fetch('/session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedIn) {
+                        loginButton.classList.add('hidden');
+                        registerButton.classList.add('hidden');
+                        usernameDisplay.textContent = `Usuario: ${data.username}`;
+                        logoutButton.classList.remove('hidden');
+                    } else {
+                        usernameDisplay.textContent = '';
+                        logoutButton.classList.add('hidden');
+                        loginButton.classList.remove('hidden');
+                        registerButton.classList.remove('hidden');
+                    }
+                });
+        }
+
+        // Cerrar sesión y actualizar el estado de la interfaz
+        logoutButton.addEventListener('click', () => {
+            fetch('/logout', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedOut) {
+                        checkSession();
+                        showNotification('Sesión cerrada correctamente.', true);
+                    }
+                });
+        });
+
+        // Verificar la sesión al cargar la página
+        checkSession();
+    </script>
+</body>
+
+</html>

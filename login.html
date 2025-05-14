@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de sesión</title>
+    <link rel="stylesheet" href="login_styles.css">
+</head>
+
+<body>
+    <main class="login-container">
+        <h1>Inicio de sesión</h1>
+        <form id="login-form" action="/login" method="POST">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" name="username" placeholder="">
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="">
+            </div>
+            <button type="submit" class="login-button">Iniciar sesión</button>
+            <p id="login-error" class="error-message hidden">Credenciales incorrectas.</p>
+        </form>
+    </main>
+    <footer>
+        <p>© Seguridad informatica 2025 Alicia Denise García Acosta | Victoria Isabel Villalba Beltrán. Todos los
+            derechos reservados</p>
+    </footer>
+    <script>
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            loginError.classList.add('hidden');
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                loginError.textContent = "Por favor, ingrese usuario y contraseña.";
+                loginError.classList.remove('hidden');
+                return;
+            }
+
+            const formData = new FormData(loginForm);
+            const urlEncodedData = new URLSearchParams(formData).toString();
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: urlEncodedData
+            });
+
+            if (response.status === 429) {
+                const errorText = await response.text(); // Read the response as plain text
+                loginError.textContent = errorText;
+                loginError.classList.remove('hidden');
+            } else {
+                try {
+                    const data = await response.json();
+                    if (data.loggedIn) {
+                        window.location.href = '/';
+                    } else {
+                        loginError.textContent = "Credenciales incorrectas.";
+                        loginError.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                    loginError.textContent = "Error inesperado al iniciar sesión.";
+                    loginError.classList.remove('hidden');
+                }
+            }
+
+            usernameInput.value = "";
+            passwordInput.value = "";
+        });
+    </script>
+</body>
+
+</html>
