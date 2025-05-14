@@ -7,6 +7,9 @@
     "start": "node server.js",
     "install": "npm install --production=false"
   },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
   "keywords": [],
   "author": "",
   "license": "ISC",
